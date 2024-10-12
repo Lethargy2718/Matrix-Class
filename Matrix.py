@@ -338,9 +338,10 @@ class Matrix:
         free_cols = self.free_columns(pivot_cols)
         rank = len(pivot_cols)
         equations, bases = [], []
+
         
-        
-        # if independent, return zero vector
+        #TODO fix any nuances arising from this
+        # if independent, return an empty list    
         if (self.m == self.n == rank) or (self.m > self.m and rank == self.n):
             return []
         

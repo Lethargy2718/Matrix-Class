@@ -47,7 +47,7 @@ class Matrix:
         
         for i in range(0,len(data)):
             if not isinstance(data[i], (list, int, float)):
-                raise ValueError("Rows must be lists or numbers.") 
+                raise ValueError("Rows must be lists, integers, or floats.") 
             if isinstance(data[i], list):
                 if len(data[i]) != len(data[0]):
                     raise ValueError("Rows must be equal in length.")

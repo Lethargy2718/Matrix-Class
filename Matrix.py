@@ -1,23 +1,38 @@
+#i exit a lot while debugging
 from sys import exit
 import copy
+from collections import defaultdict
 
 #just a line i like to print to separate stuff
 def l():
     print('--------------------------------------')
-        
-    def __repr__(self) -> str:
-        return f'x{self.index} = {self.coefficient}'
-    
+            
 class Matrix:
     def __init__(self, data) -> None:
         #self explanatory stuff. well, to start, my matrices are lists of smaller lists. but i also made subcases for lists made of
-        #integers and floats to have row and column vectors. you will see that deeper in the code. 
+        #integers and floats to have row and column vectors. you will see that diving deeper into the code. 
         self.data = copy.deepcopy(data)
         self.check_validity()
         self.order = self.find_order()
         self.m = self.order[0]
         self.n = self.order[1]
         self.vector = self.check_vector()
+        
+    def __str__(self) -> str:
+        matrix = ''
+        for i in range(len(self.data)):
+            matrix += str(self.data[i])
+            if i < len(self.data) - 1:
+                matrix += '\n'    
+        return matrix 
+            
+    def __repr__(self) -> str:
+        matrix = ''
+        for i in range(len(self.data)):
+            matrix += str(self.data[i])
+            if i < len(self.data) - 1:
+                matrix += '\n'    
+        return matrix   
 
 # Helper functions:
     def check_validity(self):
@@ -55,13 +70,7 @@ class Matrix:
             return 2 #column vector
         else:
             return 0 #not a vector
-         
-    def print(self):
-        #prints out a matrix
-        data = self.data
-        for i in range(len(data)):
-            print(data[i])
-    
+        
     def dot_product(self, vec1, vec2):
         #dot product of two vectors
         if not isinstance(vec1, list) or not isinstance(vec2, list):
@@ -183,23 +192,24 @@ class Matrix:
         return freecols        
     
     def analyze(self):
-        #prints some info about the matrix
+        results = self.rref(True)
         l()
         print("Matrix: ")
         self.print()
         l()
         print("Rref: ")
-        print(self.rref().print())
+        print(results[0])
         l()
         print('Order: ', self.order)
-        print('Rank: ', self.rank())
+        print('Rank: ', len(results[1]))
         print('Pivot columns: ', self.pivot_columns())
         print('Free columns: ', self.free_columns())
+        print('Nullspace basis: ', self.nullspace())
         l()
         
 # Matrix operations:
     def matrix_product(self, matrix):
-        #multiplies two matrices
+        # multiplies two matrices
         rows1 = self.find_order()[0]
         cols1 = self.find_order()[1]
         
@@ -207,9 +217,9 @@ class Matrix:
         cols2 = matrix.find_order()[1]
         
         if cols1 != rows2:
-            raise ValueError('Invalid. Columns of matrix 1 != Rows of matrix 2')
+            raise ValueError('Invalid. columns of matrix 1 should be equal in number to Rows of matrix 2')
 
-        #new matrix will be rows1 x cols2, so rows1 rows and cols2 columms
+        # new matrix will be rows1 x cols2, so rows1 rows and cols2 columms
         new_matrix = []
         for i in range(rows1):
             new_matrix.append([])
@@ -227,31 +237,18 @@ class Matrix:
             
         return Matrix(new_matrix)    
     
-    def sum(self, matrix):
-        #sums two matrices
-        if self.order != matrix.order:
-            raise ValueError("Matrices must be in the same order.")
-        new_matrix = []
-        
-        for i in range(self.order[0]):
-            new_matrix.append([])
-            for j in range(self.order[1]):
-                new_matrix[i].append(self.data[i][j] + matrix.data[i][j])
-                
-        return Matrix(new_matrix)   
+    def _add(self, other):
+        if self.order != other.order:
+            raise ValueError('Matrices must be the same size.')
+        return Matrix([[self.data[i][j] + other.data[i][j] for j in range(len(self.data[0]))] for i in range(len(self.data))])
+
+    def __add__(self, other):
+        return self._add(other)
+
+    def __sub__(self, other):
+        # multiplies the other matrix by -1 then adds which is the equivalent for subtraction
+        return self._add(Matrix([[-value for value in row] for row in other.data]))
     
-    def subtract(self, matrix):
-        #subtracts a matrix from another
-        if self.order != matrix.order:
-            raise ValueError("Matrices must be in the same order.")
-        new_matrix = []
-        for i in range(self.order[0]):
-            new_matrix.append([])
-            for j in range(self.order[1]):
-                new_matrix[i].append(self.data[i][j] - matrix.data[i][j])
-                
-        return Matrix(new_matrix)       
-                 
     def scalar_product(self, scalar):
         #multiplies a matrix by a scalar
         data = self.data
@@ -268,10 +265,10 @@ class Matrix:
         return Matrix(data)            
         
     def rref(self, return_pivots=False, augmented_vector=None):
-        #my magnum opus (eh): finds the row reduced echelon form of a matrix. efficiency isn't that great but i did WAY worse before, trust me.
+        # finds the row reduced echelon form of a matrix
         
-        #next_pivot_row is how i create the "echelon" form. it's how i keep track of the pivots locations and only place them
-        #in a staircase manner
+        # next_pivot_row is how i create the "echelon" form. it's how i keep track of the pivots locations and only place them
+        # in a staircase manner
         new_matrix = self.copy()
         
         if augmented_vector:
@@ -285,8 +282,8 @@ class Matrix:
         next_pivot_row = 0
         
         for j in range(new_matrix.n): 
-            #finding the first non zero entry in a column that's also in or below the next_pivot_row. can't be above it; that
-            #wouldn't be an echelon at all.
+            # finding the first non zero entry in a column that's also in or below the next_pivot_row. can't be above it; that
+            # wouldn't be an echelon at all.
             index, pivot = next(((x, y) for x,y in enumerate(new_matrix.get_column(j)) if y != 0 and x >= next_pivot_row), (None, None))
             if pivot:
                 pivot_columns.append(j)
@@ -296,30 +293,30 @@ class Matrix:
                     if augmented_vector: 
                         augmented_vector[index], augmented_vector[next_pivot_row] = augmented_vector[next_pivot_row], augmented_vector[index]
                     
-                #normalizing the pivot row    
+                # normalizing the pivot row    
                 new_matrix.scalar_vector_product(new_matrix.data[next_pivot_row], 1/pivot)
                 if augmented_vector: augmented_vector[next_pivot_row] *= 1/pivot
 
                 column_mapping = enumerate(new_matrix.get_column(j))
-                #iterating over every row and making it equal to zero using the pivot as long as it's not the pivot row itself
-                #and not equal to 0 at the first place
+                # iterating over every row and making it equal to zero using the pivot as long as it's not the pivot row itself
+                # and not equal to 0 at the first place
                 for row, num in column_mapping:
                     if row == next_pivot_row or num == 0:
                         continue
                     new_matrix.data[row] = new_matrix.sum_rows(next_pivot_row, row, -num)
                     if augmented_vector: augmented_vector[row] -= num * augmented_vector[next_pivot_row]
-                #setting the next step of the echelon    
+                # setting the next step of the echelon    
                 next_pivot_row += 1  
                         
         #and that's it :)
         
         results = [new_matrix]
-        #it returns the list of pivot column indices instead of a matrix if you pass True into the method
+        #returns [matrix, pivot columns indices, augmented vector] if they exist
         if return_pivots: results.append(pivot_columns)
         else: results.append(None)    
         if augmented_vector: results.append(augmented_vector)
         else: results.append(None)
-        #[Matrix, pivot columns indices, augmented vector]
+    
         return results
         
     def augment_vector(self, augmented_vector):
@@ -332,44 +329,55 @@ class Matrix:
         for i in range(self.m):
             new_matrix.data[i].append(augmented_vector[i])    
         return new_matrix        
-        
+
     def nullspace(self, results=None):
-        #initializing data
+        # initializing data
         if not results: 
             results = self.rref(True)
         rref, pivot_cols = results[0], results[1]
         free_cols = self.free_columns(pivot_cols)
+        rank = len(pivot_cols)
         equations, bases = [], []
         
         
-        #forming the equations. simple stuff. explained in a few lines.
+        # if independent, return zero vector
+        if (self.m == self.n == rank) or (self.m > self.m and rank == self.n):
+            return []
+        
+        # constructing a list of equations
         for i, row in enumerate(rref.data):
             equation = []
             for index, entry in enumerate(row):
+                # skip zero coefficients and pivot variables. we write in terms of free vars
                 if entry == 0 or index in pivot_cols:
                     continue   
+                # each list is an equation, each tuple is a 'variable' of index tuple[0], coefficient tuple[1]  
                 equation.append((index,-entry))
+                
+            # empty equations that arise when the row's free vars = 0 are skipped 
             if equation:
                 equations.append(equation)
-                           
-        #equations example: [[(1, -2.0), (4, -2.0)], [(4, -2.0)], [(4, -2.0)]]
-        #basically each child list is an equation. each equation is formed of a 'variable' which is a tuple formed of the
-        #index of the variable (x1,x2 etc) and its coefficient. 
-        
-        # this function iterates over len(free_cols) to set a free variable to 1 and keep the rest at 0 and repeat this for every
-        # free variable. it creates a basis vector which is just a zero vector of size n, checks the current index it should put
-        # the variable's value in using pivot_cols, then does exactly that after multiplying the coefficient by 0 or 1 based on the value
-        # of i and the index of the free variable. afterwards, it adds 1 to the index free_cols[i] for the reason i've mentioned eariler (1 for one, 0
-        # for the rest). finally, it appends the basis vector to the bases list which is where all bases are kept to be returned.
+                          
+        # constructing basis vectors    
         for i in range(len(free_cols)):
             new_basis = [0] * self.n
             for index, equation in enumerate(equations):
                 p = pivot_cols[index]
+                # sets the value to (coefficient * free variable current value)
                 for var_index, coefficient in equation:
-                    value = coefficient * (free_cols[i] == var_index)
+                    # 2nd part returns 1 if equal 0 otherwise which is equivalent to setting one free variable to 1 and the
+                    # others to zero for each i
+                    if len(free_cols) > 1:
+                        value = coefficient * (free_cols[i] == var_index) 
+                    else:
+                        value = coefficient    
                     new_basis[p] += value
-            
-            new_basis[free_cols[i]] += 1             
+            # sets the free variable row to 1. the other free var rows are zero by default anyways
+            if len(free_cols) > 1:
+                new_basis[free_cols[i]] += 1 
+            else:
+                new_basis[free_cols[0]] += 1
+                                                
             bases.append(new_basis)  
         return bases
                 
@@ -378,39 +386,120 @@ class Matrix:
         augmented_matrix = self.augment_vector(sol)
         results = self.rref(True, sol)
         results_aug = augmented_matrix.rref(True)
-        R = results[0] #rref matrix not augmented
-        b = results[2] #Solution vector post reduction
+        R, pivot_cols, b = results[0], results[1], results[2]
         rank = len(results[1]) #A's rank
         rank_aug = len(results_aug[1]) #[A|B]'s rank
         
         for i in range(self.m):
-            if self.check_zeroes(i) and b[i] == 0:
+            if self.check_zeroes(i) and b[i] != 0:
                 print('System is not consistent.')
                 return 
         if rank == rank_aug and rank == self.n:
-            #unique solution
+            # unique solution
             type = 0
         if rank == rank_aug and rank < self.n:
-            #infinite solutions
+            # infinite solutions
             type = 1    
         elif rank != rank_aug:
-            #no solution
+            # no solution
             type = 2
             
         if type == 0:
-            print(''.join(f'x{i+1} = {b[i]}, ' for i in range(len(b))))
+            print('Unique solution:')
+            l()
+            print(''.join(f'x{i+1} = {b[i]} ' for i in range(self.n)))
             
         if type == 1:    
-            #TODO
-            raise NotImplementedError('Later')
+            """
+            to solve a system with infinite solutions Ax = b:
+            x = xp + N(A)
+            where xp is any solution and N(A) is the nullspace
+            i get both and format them into an answer.
+            """
+            print('Infinite solutions. General solution:')
+            l()
             
-
+            # finding the particular solution
+            xp = [0] * self.n
+            for i, row in enumerate(R.data):
+                if i > rank - 1:
+                    break
+                xp[pivot_cols[i]] += b[i] / row[pivot_cols[i]]
+                
+            # obtaining the nullspace and appending xp to it    
+            solution = self.nullspace()
+            solution.append(xp)
+            
+            answers = defaultdict(list)
+            
+            # mapping each variable to its corresponding expression
+            # basis vecs are stored as tuples with letters representing parameters and the paramters' coefficients
+            for i, vector in enumerate(solution):    
+                letter = chr(97 + i)
+                for j, n in enumerate(vector):
+                    # skip coefficients of value 0
+                    if n != 0:
+                        # the final item of 'solution' is xp. no letters/paramters added to that
+                        if i == len(solution) - 1:
+                            answers[j].append(n)
+                            continue
+                        answers[j].append((letter, n))
+            
+            # formatting the dictionary into text
+            for index, value in sorted(answers.items()):
+                text = ''
+                for object in value:
+                    if isinstance(object, tuple):
+                        if object[1] != 1:
+                            text += str(object[1]) #num
+                        text += object[0] #letter
+                        text += ' + '
+                    else:    
+                        text += str(object)
+                        
+                    # removing the extra plus sign    
+                if text[-1] == ' ':
+                    text = text[:-2]    
+                print(f'x{index + 1}: ' + text)
+                
         if type == 2:
             print('No solution.')
           
-#my testing playground. just try whatever here        
-matrix1 = Matrix([[2,-1,3],[1,4,2]]) 
-test = Matrix([[-1,1,2,4], [2,0,1,-7]])
-print(test.nullspace())
-b = [9,0]
-# matrix1.solve_equations(b)
+# my testing playground. just try whatever here   
+
+# infinite solutions examples
+matrix = Matrix([[2,2,2], [2,3,2], [1,1,1]]) 
+b = [-2,4,-1]
+matrix.solve_equations(b)
+
+l()
+l()
+
+matrix = Matrix([[1,1,1], [2,-2,-2], [3,-1,-1]])
+b = [10,4,14]
+matrix.solve_equations(b)
+
+l()
+l()
+
+matrix = Matrix([[1,2], [2,4]])
+b = [4,8]
+matrix.solve_equations(b)
+
+l()
+l()
+
+
+# unique solution example
+matrix = Matrix([[7,5], [3,-4]])
+b = [-12, 1]
+matrix.solve_equations(b)
+
+l()
+l()
+
+# no solution example
+matrix = Matrix([[1,2], [2,4]])
+b = [4,9]
+matrix.solve_equations(b)
+

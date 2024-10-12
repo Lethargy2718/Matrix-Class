@@ -1,7 +1,5 @@
-#i exit a lot while debugging
 from sys import exit
 import copy
-from collections import defaultdict
 
 #just a line i like to print to separate stuff
 def l():

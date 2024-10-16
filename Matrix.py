@@ -366,8 +366,8 @@ class Matrix:
                 next_pivot_row += 1  
                                 
         results = [new_matrix]
-        #Returns [matrix, pivot columns indices, augmented vector]
-        #Whatever doesn'r exist is None.
+        # Returns [matrix, pivot columns indices, augmented vector]
+        # Whatever doesn'r exist is None.
         if return_pivots: results.append(pivot_columns)
         else: results.append(None)    
         if augmented_vector: results.append(augmented_vector)
@@ -401,9 +401,9 @@ class Matrix:
         rank = len(pivot_cols)
         equations, bases = [], []
 
-        
-        #TODO fix any nuances arising from this
-        # if independent, return an empty list    
+        #TODO 
+        # Fix any nuances arising from this.
+        # If independent, return an empty list    
         if (self.m == self.n == rank) or (self.m > self.m and rank == self.n):
             return []
         

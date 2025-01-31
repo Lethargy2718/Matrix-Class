@@ -483,7 +483,7 @@ class Matrix:
             To solve a system with infinite solutions Ax = b:
             x = xp + N(A)
             where xp is any solution and N(A) is the nullspace
-            i get both and format them into an answer.
+            I get both and format them into an answer.
             """
             print('Infinite solutions. General solution:')
             l()

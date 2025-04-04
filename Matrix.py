@@ -570,6 +570,6 @@ l()
 l()
 
 # No solution example
-matrix = Matrix[[2,4], [4,8])
+matrix = Matrix([[2,4], [4,8]])
 b = [1,2]
 matrix.solve_equations(b)

@@ -115,7 +115,7 @@ class Matrix:
         """
         Checks if a row is a zero vector.
         """
-        if index >= self.m
+        if index >= self.m:
             raise ValueError("Index out of range.")
         
         for i in range(self.n):
@@ -571,5 +571,5 @@ l()
 
 # No solution example
 matrix = Matrix([[2,4], [4,8]])
-b = [1,2]
+b = [-1,2]
 matrix.solve_equations(b)
